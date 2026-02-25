@@ -10,7 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <header className="h-14 flex items-center border-b px-4 bg-card">
             <SidebarTrigger />
           </header>
-          <div className="p-6">{children}</div>
+          <div className="p-3 sm:p-6">{children}</div>
         </main>
       </div>
     </SidebarProvider>

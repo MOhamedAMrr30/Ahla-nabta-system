@@ -175,11 +175,11 @@ const Inventory = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Inventory & Waste</h1>
+      <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold">Inventory & Waste</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Add Batch</Button></DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-[95vw] sm:max-w-lg">
             <DialogHeader><DialogTitle>Add Batch</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div><Label>Product</Label>
@@ -291,7 +291,7 @@ const Inventory = () => {
         </Dialog>
       </div>
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

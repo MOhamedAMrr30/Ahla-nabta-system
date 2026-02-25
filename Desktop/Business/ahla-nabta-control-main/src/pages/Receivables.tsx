@@ -51,9 +51,9 @@ const Receivables = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Receivables</h1>
-        <div className="flex gap-3">
+      <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Receivables</h1>
+        <div className="flex flex-wrap gap-3">
           <Card className="border-emerald-500/30 bg-emerald-500/5">
             <CardContent className="py-2 px-4">
               <p className="text-xs text-muted-foreground">Total Collected</p>
@@ -69,7 +69,7 @@ const Receivables = () => {
         </div>
       </div>
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

@@ -122,11 +122,11 @@ const Dashboard = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Dashboard</h1>
 
       {/* Capital Section */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between mb-3 gap-2">
           <h2 className="text-lg font-semibold text-muted-foreground">Capital Overview</h2>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setShowLedger(!showLedger)}>
@@ -162,7 +162,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Manual Capital</CardTitle>
@@ -241,45 +241,47 @@ const Dashboard = () => {
         {showLedger && (
           <Card className="mb-4">
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {capitalEntries.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No transactions yet. Add your initial capital to get started.</TableCell></TableRow>
-                  ) : (
-                    capitalEntries.map((e) => (
-                      <TableRow key={e.id}>
-                        <TableCell>{e.date}</TableCell>
-                        <TableCell>
-                          <span className={cn(
-                            "text-xs font-medium px-2 py-0.5 rounded-full",
-                            e.type === "deposit" || e.type === "initial" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          )}>
-                            {e.type === "initial" ? "Initial" : e.type === "deposit" ? "In" : "Out"}
-                          </span>
-                        </TableCell>
-                        <TableCell>{e.description}</TableCell>
-                        <TableCell className={cn("font-medium", e.type === "withdrawal" ? "text-red-600" : "text-green-600")}>
-                          {e.type === "withdrawal" ? "-" : "+"}{e.amount.toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteEntry(e.id)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {capitalEntries.length === 0 ? (
+                      <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No transactions yet. Add your initial capital to get started.</TableCell></TableRow>
+                    ) : (
+                      capitalEntries.map((e) => (
+                        <TableRow key={e.id}>
+                          <TableCell>{e.date}</TableCell>
+                          <TableCell>
+                            <span className={cn(
+                              "text-xs font-medium px-2 py-0.5 rounded-full",
+                              e.type === "deposit" || e.type === "initial" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            )}>
+                              {e.type === "initial" ? "Initial" : e.type === "deposit" ? "In" : "Out"}
+                            </span>
+                          </TableCell>
+                          <TableCell>{e.description}</TableCell>
+                          <TableCell className={cn("font-medium", e.type === "withdrawal" ? "text-red-600" : "text-green-600")}>
+                            {e.type === "withdrawal" ? "-" : "+"}{e.amount.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteEntry(e.id)}>
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -287,7 +289,7 @@ const Dashboard = () => {
 
       {/* Key metrics */}
       <p className="text-muted-foreground mb-4 text-sm">Weekly performance summary</p>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {cards.map((c) => (
           <Card key={c.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -303,7 +305,7 @@ const Dashboard = () => {
 
       {/* Cost Breakdown */}
       <h2 className="text-lg font-semibold mb-3 text-muted-foreground">Cost Breakdown (Weekly)</h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {costCards.map((c) => (
           <Card key={c.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -319,7 +321,7 @@ const Dashboard = () => {
       </div>
 
       {/* Other metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {otherCards.map((c) => (
           <Card key={c.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">

@@ -299,9 +299,9 @@ const PriceCalculator = () => {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                         <Calculator className="h-6 w-6" />Price Calculator
                     </h1>
                     <div className="flex items-center gap-3 mt-1">
@@ -311,7 +311,7 @@ const PriceCalculator = () => {
                         <GlobalSaveIndicator status={combinedStatus} />
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline"><Users className="mr-2 h-4 w-4" />Apply to Client</Button>
@@ -356,7 +356,7 @@ const PriceCalculator = () => {
                     <CardTitle className="text-base">Global Cost Settings (included in Total Cost)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <Label>Overhead %</Label>
                             <Input type="number" min="0" step="0.1" value={overheadPct} onChange={(e) => handleOverheadChange(e.target.value)} placeholder="e.g. 10" />
@@ -381,7 +381,7 @@ const PriceCalculator = () => {
                         Total Cost = Base × Size × (1 + {oh}% + {lb}%). Then set <strong>Pack Price</strong> or <strong>Profit %</strong> — they auto-calculate each other.
                     </p>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>

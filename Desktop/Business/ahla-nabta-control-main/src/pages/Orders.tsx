@@ -304,7 +304,7 @@ const CreateOrderForm = ({ onClose, editingOrderId }: { onClose: () => void; edi
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Client</Label>
           <Select value={clientId} onValueChange={loadClientPrices}>
@@ -478,7 +478,7 @@ const CreateOrderForm = ({ onClose, editingOrderId }: { onClose: () => void; edi
         zone === "yellow" && "border-margin-yellow/30 bg-margin-yellow/5",
         zone === "red" && "border-margin-red/30 bg-margin-red/5",
       )}>
-        <CardContent className="pt-4 grid grid-cols-3 md:grid-cols-6 gap-4 text-sm">
+        <CardContent className="pt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-sm">
           <div><span className="text-muted-foreground">Revenue</span><p className="font-bold text-lg">{calc.revenue.toFixed(2)}</p></div>
           <div><span className="text-muted-foreground">Farmer Cost</span><p className="font-bold text-lg text-orange-600">{calc.farmerCost.toFixed(2)}</p></div>
           <div><span className="text-muted-foreground">Transport + Pkg</span><p className="font-bold text-lg">{calc.logistics.toFixed(2)}</p></div>
@@ -656,7 +656,7 @@ const OrderRow = ({ order, index, onEdit }: { order: any; index: number; onEdit:
               </Table>
 
               {/* Cost Breakdown */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-3 rounded-md border bg-background">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-3 rounded-md border bg-background">
                 <div>
                   <span className="text-xs text-muted-foreground">Base Cost (Farmer)</span>
                   <p className="font-bold text-orange-600">
@@ -695,7 +695,7 @@ const OrderRow = ({ order, index, onEdit }: { order: any; index: number; onEdit:
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => onEdit(order.id)}><Pencil className="mr-1 h-3 w-3" />Edit Order</Button>
                 <Button size="sm" variant="outline" onClick={handleInvoice}><FileText className="mr-1 h-3 w-3" />Invoice PDF</Button>
                 <Button size="sm" variant="outline" onClick={handleDeliveryNote}><FileText className="mr-1 h-3 w-3" />Delivery Note</Button>
@@ -751,13 +751,13 @@ const Orders = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Orders</h1>
+      <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold">Orders</h1>
         <Dialog open={creating} onOpenChange={(open) => { if (!open) handleCloseDialog(); else setCreating(true); }}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" />Create Order</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editingOrderId ? "Edit Order" : "Create Order"}</DialogTitle></DialogHeader>
             <CreateOrderForm key={editingOrderId || "new"} onClose={handleCloseDialog} editingOrderId={editingOrderId} />
           </DialogContent>
@@ -765,51 +765,53 @@ const Orders = () => {
       </div>
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Order Date</TableHead>
-                <TableHead>Delivery</TableHead>
-                <TableHead>Revenue</TableHead>
-                <TableHead>Profit</TableHead>
-                <TableHead>Margin</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Loading...</TableCell></TableRow>
-              ) : !orders?.length ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No orders yet</TableCell></TableRow>
-              ) : (
-                groupedOrders.map((group) => {
-                  const rows = group.orders.map((o: any) => {
-                    const idx = globalIdx++;
-                    return <OrderRow key={o.id} order={o} index={idx} onEdit={handleOpenEdit} />;
-                  });
-                  return [
-                    <TableRow key={`date-${group.date}`} className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={3} className="font-semibold text-sm">
-                        <div className="flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4 text-primary" />
-                          {group.date}
-                          <span className="text-xs text-muted-foreground font-normal">({group.orders.length} order{group.orders.length > 1 ? "s" : ""})</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-semibold text-sm">{group.totalRevenue.toFixed(2)}</TableCell>
-                      <TableCell className="font-semibold text-sm">{group.totalProfit.toFixed(2)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        Transport: {group.totalTransport.toFixed(2)}
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>,
-                    ...rows,
-                  ];
-                })
-              )}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Order Date</TableHead>
+                  <TableHead>Delivery</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Profit</TableHead>
+                  <TableHead>Margin</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Loading...</TableCell></TableRow>
+                ) : !orders?.length ? (
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No orders yet</TableCell></TableRow>
+                ) : (
+                  groupedOrders.map((group) => {
+                    const rows = group.orders.map((o: any) => {
+                      const idx = globalIdx++;
+                      return <OrderRow key={o.id} order={o} index={idx} onEdit={handleOpenEdit} />;
+                    });
+                    return [
+                      <TableRow key={`date-${group.date}`} className="bg-muted/50 hover:bg-muted/50">
+                        <TableCell colSpan={3} className="font-semibold text-sm">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-primary" />
+                            {group.date}
+                            <span className="text-xs text-muted-foreground font-normal">({group.orders.length} order{group.orders.length > 1 ? "s" : ""})</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold text-sm">{group.totalRevenue.toFixed(2)}</TableCell>
+                        <TableCell className="font-semibold text-sm">{group.totalProfit.toFixed(2)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          Transport: {group.totalTransport.toFixed(2)}
+                        </TableCell>
+                        <TableCell></TableCell>
+                      </TableRow>,
+                      ...rows,
+                    ];
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

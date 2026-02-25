@@ -141,9 +141,9 @@ const Pricing = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Client Pricing</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold">Client Pricing</h1>
+        <div className="flex flex-wrap gap-2">
           {/* Multi-client pricing button */}
           <Dialog open={multiOpen} onOpenChange={setMultiOpen}>
             <DialogTrigger asChild><Button variant="outline"><Users className="mr-2 h-4 w-4" />Set for Multiple Clients</Button></DialogTrigger>
@@ -288,7 +288,7 @@ const Pricing = () => {
                   </div>
                 </button>
                 {isExpanded && (
-                  <CardContent className="p-0 border-t">
+                  <CardContent className="p-0 border-t overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
