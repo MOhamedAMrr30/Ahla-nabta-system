@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
@@ -597,4 +598,95 @@ export function useAnalyticsData() {
       };
     },
   });
+}
+
+// ─── Weight Variants (localStorage-based) ───────────────────────────────────
+const WEIGHT_VARIANTS_KEY = "ahla_nabta_weight_variants";
+
+export interface WeightVariant {
+  weight: number; // kg
+  price: number;  // EGP
+}
+
+function loadWeightVariants(): Record<string, WeightVariant[]> {
+  try {
+    const raw = localStorage.getItem(WEIGHT_VARIANTS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { }
+  return {};
+}
+
+function saveWeightVariants(data: Record<string, WeightVariant[]>) {
+  localStorage.setItem(WEIGHT_VARIANTS_KEY, JSON.stringify(data));
+}
+
+export function useProductWeightVariants() {
+  return useQuery({
+    queryKey: ["weight_variants"],
+    queryFn: async () => loadWeightVariants(),
+  });
+}
+
+export function useUpdateProductWeightVariants() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, variants }: { productId: string; variants: WeightVariant[] }) => {
+      const all = loadWeightVariants();
+      all[productId] = variants;
+      saveWeightVariants(all);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["weight_variants"] }),
+  });
+}
+
+// ─── Auto-Save Hook ─────────────────────────────────────────────────────────
+
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+export function useAutoSave<T>(
+  value: T,
+  onSave: (val: T) => Promise<void>,
+  delayMs = 800,
+  enabled = true,
+) {
+  const [status, setStatus] = useState<SaveStatus>("idle");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevRef = useRef<T>(value);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const triggerSave = useCallback(
+    (val: T) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setStatus("saving");
+      timeoutRef.current = setTimeout(async () => {
+        try {
+          await onSave(val);
+          if (mountedRef.current) setStatus("saved");
+          // Reset to idle after 2s
+          setTimeout(() => { if (mountedRef.current) setStatus("idle"); }, 2000);
+        } catch {
+          if (mountedRef.current) setStatus("error");
+        }
+      }, delayMs);
+    },
+    [onSave, delayMs],
+  );
+
+  useEffect(() => {
+    if (!enabled) return;
+    // Deep compare via JSON (fine for small objects)
+    const prev = JSON.stringify(prevRef.current);
+    const curr = JSON.stringify(value);
+    if (prev !== curr) {
+      prevRef.current = value;
+      triggerSave(value);
+    }
+  }, [value, enabled, triggerSave]);
+
+  return status;
 }

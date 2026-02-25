@@ -1,5 +1,9 @@
-import { useState } from "react";
-import { useProducts, useUpsertProduct, useDeleteProduct, usePricingSettings, useProductMargins } from "@/hooks/use-data";
+import { useState, useCallback } from "react";
+import {
+  useProducts, useUpsertProduct, useDeleteProduct, usePricingSettings,
+  useProductMargins, useProductWeightVariants, useUpdateProductWeightVariants,
+  useAutoSave, type WeightVariant, type SaveStatus,
+} from "@/hooks/use-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,8 +11,127 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronRight, Zap, Weight, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+const DEFAULT_WEIGHTS = [0.1, 0.25, 0.5, 1.0];
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  if (status === "saving") return <span className="inline-flex items-center gap-1 text-xs text-amber-500"><Loader2 className="h-3 w-3 animate-spin" />Saving…</span>;
+  if (status === "saved") return <span className="inline-flex items-center gap-1 text-xs text-green-500"><CheckCircle2 className="h-3 w-3" />Saved</span>;
+  if (status === "error") return <span className="text-xs text-red-500">Error saving</span>;
+  return null;
+}
+
+// Sub-component for Weight Variants
+function WeightVariantsPanel({
+  productId,
+  costPerUnit,
+  unit,
+}: {
+  productId: string;
+  costPerUnit: number;
+  unit: string;
+}) {
+  const { data: allVariants } = useProductWeightVariants();
+  const updateVariants = useUpdateProductWeightVariants();
+  const variants: WeightVariant[] = allVariants?.[productId] || [];
+
+  const [localVariants, setLocalVariants] = useState<WeightVariant[]>(variants);
+
+  // Sync from storage on first load
+  useState(() => {
+    if (variants.length > 0) setLocalVariants(variants);
+  });
+
+  const handleSave = useCallback(async (val: WeightVariant[]) => {
+    await updateVariants.mutateAsync({ productId, variants: val });
+  }, [productId, updateVariants]);
+
+  const saveStatus = useAutoSave(localVariants, handleSave, 800, localVariants.length > 0);
+
+  const addVariant = () => {
+    const next = [...localVariants, { weight: 0.1, price: Math.round(costPerUnit * 0.1 * 100) / 100 }];
+    setLocalVariants(next);
+  };
+
+  const generateDefaults = () => {
+    const generated = DEFAULT_WEIGHTS.map((w) => ({
+      weight: w,
+      price: Math.round(costPerUnit * w * 100) / 100,
+    }));
+    setLocalVariants(generated);
+  };
+
+  const updateVariant = (idx: number, key: keyof WeightVariant, val: number) => {
+    const next = localVariants.map((v, i) => i === idx ? { ...v, [key]: val } : v);
+    setLocalVariants(next);
+  };
+
+  const removeVariant = (idx: number) => {
+    setLocalVariants(localVariants.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="py-3 px-4 bg-gradient-to-r from-emerald-950/20 to-teal-950/10 border-t border-emerald-900/20">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Weight className="h-4 w-4 text-emerald-400" />
+          <span className="text-sm font-medium text-emerald-300">Weight Variants</span>
+          <SaveIndicator status={saveStatus} />
+        </div>
+        <div className="flex gap-2">
+          {localVariants.length === 0 && (
+            <Button variant="outline" size="sm" onClick={generateDefaults} className="h-7 text-xs border-emerald-700 text-emerald-300 hover:bg-emerald-900/30">
+              <Zap className="mr-1 h-3 w-3" />Generate Defaults
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={addVariant} className="h-7 text-xs border-emerald-700 text-emerald-300 hover:bg-emerald-900/30">
+            <Plus className="mr-1 h-3 w-3" />Add Variant
+          </Button>
+        </div>
+      </div>
+
+      {localVariants.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">No weight variants yet. Click "Generate Defaults" or "Add Variant" to create pricing tiers.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {localVariants.map((v, i) => (
+            <div key={i} className="flex items-center gap-2 bg-background/40 rounded-lg px-3 py-2 border border-border/30">
+              <div className="flex-1">
+                <div className="flex items-center gap-1 mb-1">
+                  <Input
+                    type="number"
+                    min="0.01"
+                    step="0.1"
+                    className="h-7 w-20 text-xs"
+                    value={v.weight}
+                    onChange={(e) => updateVariant(i, "weight", parseFloat(e.target.value) || 0)}
+                  />
+                  <span className="text-xs text-muted-foreground">{unit}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    className="h-7 w-20 text-xs"
+                    value={v.price}
+                    onChange={(e) => updateVariant(i, "price", parseFloat(e.target.value) || 0)}
+                  />
+                  <span className="text-xs text-muted-foreground">EGP</span>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeVariant(i)}>
+                <Trash2 className="h-3 w-3 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const Products = () => {
   const { data: products, isLoading } = useProducts();
@@ -22,6 +145,9 @@ const Products = () => {
   // Inline editing
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", name_ar: "", unit: "", cost_per_unit: "", shelf_life_days: "" });
+
+  // Expanded weight variants
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleSave = () => {
     if (!form.name || !form.cost_per_unit) {
@@ -67,6 +193,10 @@ const Products = () => {
     );
   };
 
+  const toggleExpand = (id: string) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -98,6 +228,7 @@ const Products = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Arabic</TableHead>
                 <TableHead>Unit</TableHead>
@@ -110,9 +241,9 @@ const Products = () => {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Loading...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">Loading...</TableCell></TableRow>
               ) : !products?.length ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No products yet</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No products yet</TableCell></TableRow>
               ) : (
                 products.map((p) => {
                   const oh = settings?.overhead_pct || 0;
@@ -120,10 +251,12 @@ const Products = () => {
                   const pm = savedMargins?.[p.id] || 0;
                   const suggested = p.cost_per_unit * (1 + oh / 100 + lb / 100 + pm / 100);
                   const isEditing = editingId === p.id;
+                  const isExpanded = expandedId === p.id;
 
                   if (isEditing) {
                     return (
                       <TableRow key={p.id} className="bg-muted/30">
+                        <TableCell></TableCell>
                         <TableCell><Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="h-8 w-32" /></TableCell>
                         <TableCell><Input value={editForm.name_ar} onChange={(e) => setEditForm({ ...editForm, name_ar: e.target.value })} dir="rtl" className="h-8 w-24" /></TableCell>
                         <TableCell>
@@ -151,25 +284,39 @@ const Products = () => {
                   }
 
                   return (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.name}</TableCell>
-                      <TableCell dir="rtl">{p.name_ar || "—"}</TableCell>
-                      <TableCell>{p.unit}</TableCell>
-                      <TableCell>{p.cost_per_unit}</TableCell>
-                      <TableCell>{pm}%</TableCell>
-                      <TableCell className="font-bold text-primary">{suggested.toFixed(2)}</TableCell>
-                      <TableCell>{p.shelf_life_days} days</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(p)}>
-                            <Pencil className="h-3 w-3" />
+                    <>
+                      <TableRow key={p.id} className={isExpanded ? "bg-emerald-950/10 border-b-0" : ""}>
+                        <TableCell className="w-8 pr-0">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleExpand(p.id)}>
+                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-emerald-400" /> : <ChevronRight className="h-3.5 w-3.5" />}
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(p.id)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell className="font-medium">{p.name}</TableCell>
+                        <TableCell dir="rtl">{p.name_ar || "—"}</TableCell>
+                        <TableCell>{p.unit}</TableCell>
+                        <TableCell>{p.cost_per_unit}</TableCell>
+                        <TableCell>{pm}%</TableCell>
+                        <TableCell className="font-bold text-primary">{suggested.toFixed(2)}</TableCell>
+                        <TableCell>{p.shelf_life_days} days</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(p)}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(p.id)}>
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && (
+                        <TableRow key={`${p.id}-variants`} className="hover:bg-transparent">
+                          <TableCell colSpan={9} className="p-0">
+                            <WeightVariantsPanel productId={p.id} costPerUnit={p.cost_per_unit} unit={p.unit} />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   );
                 })
               )}
